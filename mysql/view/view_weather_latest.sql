@@ -1,0 +1,2 @@
+create or REPLACE view view_weather_latest as
+select cw.CITY_CODE, cw.WEATHER, cw.TEMPERATURE, dic.DAY_PIC, MAX(cw.CREATE_TIME) as CREATE_TIME from cj_weather cw left join dict_weather_pic dic on dic.ID = cw.PIC group by cw.CITY_CODE ;
