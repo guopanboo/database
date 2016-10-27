@@ -3,37 +3,37 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS `queryMasterById` $$
 CREATE PROCEDURE queryMasterById(IN masterId char(36))
 BEGIN
-	-- ∂®“Â“ª∏ˆ±‰¡ø¿¥±Í ∂ «∑Ò «µÁ’æ£®1 «µÁ’æ£¨ 0  ««¯”Ú£©
+	-- ÂÆö‰πâ‰∏Ä‰∏™ÂèòÈáèÊù•Ê†áËØÜÊòØÂê¶ÊòØÁîµÁ´ôÔºà1ÊòØÁîµÁ´ôÔºå 0 ÊòØÂå∫ÂüüÔºâ
 	DECLARE var_is_ps INTEGER DEFAULT NULL; 
-	-- ∂®“Â“ª∏ˆ±‰¡ø¥Ê¥¢«¯”ÚµÁ’æid
+	-- ÂÆö‰πâ‰∏Ä‰∏™ÂèòÈáèÂ≠òÂÇ®Âå∫ÂüüÁîµÁ´ôid
 	DECLARE var_master_id VARCHAR(36);
-	-- ∂®“Â±‰¡ø¥Ê¥¢«¯”Ú√˚≥∆
+	-- ÂÆö‰πâÂèòÈáèÂ≠òÂÇ®Âå∫ÂüüÂêçÁß∞
 	DECLARE var_master_name varchar(200);
-	-- ∂®“Â“ª∏ˆ±‰¡ø¥Ê¥¢ÃÏ∆¯code
+	-- ÂÆö‰πâ‰∏Ä‰∏™ÂèòÈáèÂ≠òÂÇ®Â§©Ê∞îcode
 	DECLARE var_city_code VARCHAR(36);
-	-- ∂®“Â”Œ±Í±È¿˙ ±£¨◊˜Œ™≈–∂œ «∑Ò±È¿˙ÕÍ»´≤øº«¬ºµƒ±Íº«
+	-- ÂÆö‰πâÊ∏∏Ê†áÈÅçÂéÜÊó∂Ôºå‰Ωú‰∏∫Âà§Êñ≠ÊòØÂê¶ÈÅçÂéÜÂÆåÂÖ®ÈÉ®ËÆ∞ÂΩïÁöÑÊ†áËÆ∞
   DECLARE cur_flag INTEGER DEFAULT 0;
-	-- ∂®“Â”Œ±Í£¨∏˘æ›masterId≤È—Ø≥ˆœ¬“ªº∂µƒ«¯”ÚµÁ’æ¿Ô⁄¿±®
+	-- ÂÆö‰πâÊ∏∏Ê†áÔºåÊ†πÊçÆmasterIdÊü•ËØ¢Âá∫‰∏ã‰∏ÄÁ∫ßÁöÑÂå∫ÂüüÁîµÁ´ôÈáåËØ∂Êä•
 	DECLARE cur CURSOR FOR select ma.id, ma.name, ma.WEATHER_CITY_CODE, case type when 7 then 1 else 0 end as a from ps_master_areas ma where ma.ID in (select id from ps_master_areas where DEL_FLAG =0 AND PARENT_ID = masterId);
-	-- …˘√˜µ±”Œ±Í±È¿˙ÕÍ»´≤øº«¬º∫ÛΩ´±Í÷æ±‰¡ø÷√≥…ƒ≥∏ˆ÷µ
+	-- Â£∞ÊòéÂΩìÊ∏∏Ê†áÈÅçÂéÜÂÆåÂÖ®ÈÉ®ËÆ∞ÂΩïÂêéÂ∞ÜÊ†áÂøóÂèòÈáèÁΩÆÊàêÊüê‰∏™ÂÄº
 	DECLARE CONTINUE HANDLER FOR NOT FOUND 
 		SET cur_flag = 1;
 	
 
-	-- ¥Úø™”Œ±Í
+	-- ÊâìÂºÄÊ∏∏Ê†á
 	OPEN cur;
-	-- —≠ª∑
+	-- Âæ™ÁéØ
 	REPEAT
-		FETCH cur INTO var_master_id, var_master_name, var_city_code, var_is_ps; -- »°≥ˆ“ªÃıº«¬º
+		FETCH cur INTO var_master_id, var_master_name, var_city_code, var_is_ps; -- ÂèñÂá∫‰∏ÄÊù°ËÆ∞ÂΩï
 		IF cur_flag = 0 THEN
 			-- select var_master_id, var_city_code, var_is_ps;
-			IF var_is_ps = 1 THEN --  «µÁ’æ
+			IF var_is_ps = 1 THEN -- ÊòØÁîµÁ´ô
 				select 1 as is_ps, vm.ID, vm.name, vm.CAPACITY, vm.TODAY_ENERGY, vm.TOTAL_ENERGY, vm.LAST_COLLECTION_TIME, vm.PIC_PATH from view_mprw vm where vm.ID = var_master_id;
-			ELSE --  ««¯”Ú
+			ELSE -- ÊòØÂå∫Âüü
 				select 0 as is_ps, var_master_id as id, var_master_name as name, count(*) as num, sum(if(LAST_COLLECTION_TIME > DATE_SUB(SYSDATE(),INTERVAL 30 MINUTE), 1, 0)) as online_num, sum(CAPACITY) as CAPACITY, sum(TODAY_ENERGY) as TODAY_ENERGY, sum(TOTAL_ENERGY) as TOTAL_ENERGY from view_mprw where ID in (select ID from ps_master_areas where pcode like CONCAT((select pcode from ps_master_areas where id = var_master_id),'%'));
 			END IF;
 		END IF;
-	UNTIL cur_flag  END REPEAT;-- —≠ª∑Ω· ¯
+	UNTIL cur_flag  END REPEAT;-- Âæ™ÁéØÁªìÊùü
 	CLOSE cur;
 END $$
 DELIMITER ;

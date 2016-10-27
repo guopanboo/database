@@ -2,160 +2,165 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS `statistics_ps_data` $$
 CREATE PROCEDURE statistics_ps_data()
 BEGIN
--- ------------±äÁ¿ÉùÃ÷ start--------------------------------------------------------------------------------------------------------------
-	-- ¶¨Òå±äÁ¿À´½ÓÊÕ½á¹û¼¯ÖĞµÄ¼ÇÂ¼
+-- ------------å˜é‡å£°æ˜ start--------------------------------------------------------------------------------------------------------------
+	-- å®šä¹‰å˜é‡æ¥æ¥æ”¶ç»“æœé›†ä¸­çš„è®°å½•
 	DECLARE var_crid VARCHAR(36);
 	DECLARE var_collect_node_id VARCHAR(36);
 	DECLARE var_collect_time DATETIME;
 	DECLARE var_today DECIMAL(25,5);
 	DECLARE var_total DECIMAL(25,5);
 	DECLARE var_psid VARCHAR(36);
-	-- ¶¨Òå±äÁ¿À´¼ÇÂ¼Äê,ÔÂ,ÈÕ
+	-- å®šä¹‰å˜é‡æ¥è®°å½•å¹´,æœˆ,æ—¥
 	DECLARE var_year VARCHAR(4);
 	DECLARE var_month VARCHAR(2);
 	DECLARE var_day VARCHAR(2);
-	-- ¶¨ÒåÒ»¸ö±äÁ¿´æ´¢·¢µçÁ¿
+	-- å®šä¹‰ä¸€ä¸ªå˜é‡å­˜å‚¨å‘ç”µé‡
 	DECLARE var_energy DECIMAL(25,5);
-	-- ¶¨ÒåÒ»¸ö±äÁ¿À´´æ´¢Ò»¸öÊı×Ö£¬ÓÃÀ´ÅĞ¶ÏÊÇ·ñ´æÔÚ
+	-- å®šä¹‰ä¸€ä¸ªå˜é‡æ¥å­˜å‚¨ä¸€ä¸ªæ•°å­—ï¼Œç”¨æ¥åˆ¤æ–­æ˜¯å¦å­˜åœ¨
 	DECLARE var_exist INTEGER DEFAULT 0;
-	-- ¶¨ÒåÒ»¸ö±äÁ¿À´´æ´¢ÉÏÒ»´ÎµÄ·¢µçÁ¿
+	-- å®šä¹‰ä¸€ä¸ªå˜é‡æ¥å­˜å‚¨ä¸Šä¸€æ¬¡çš„å‘ç”µé‡
 	DECLARE var_last DECIMAL(25,5);
-	-- ¶¨ÒåÓÎ±ê±éÀúÊ±£¬×÷ÎªÅĞ¶ÏÊÇ·ñ±éÀúÍêÈ«²¿¼ÇÂ¼µÄ±ê¼Ç
+	-- å®šä¹‰æ¸¸æ ‡éå†æ—¶ï¼Œä½œä¸ºåˆ¤æ–­æ˜¯å¦éå†å®Œå…¨éƒ¨è®°å½•çš„æ ‡è®°
   DECLARE cur_flag INTEGER DEFAULT 0;
-	-- ¶¨ÒåÒ»¸ö±äÁ¿£¬×÷ÎªÊÇ·ñ³ö´íµÄ±ê¼Ç
+	-- å®šä¹‰ä¸€ä¸ªå˜é‡ï¼Œä½œä¸ºæ˜¯å¦å‡ºé”™çš„æ ‡è®°
 	DECLARE t_error INTEGER DEFAULT 0;
-	-- ¶¨ÒåÓÎ±ê£¬²éÑ¯³öcj_inverter_dataÖĞµÄ100Ìõ¼ÇÂ¼£¬°´²É¼¯Ê±¼ä£¬µçÕ¾ ÉıĞòÅÅĞò
+	-- å®šä¹‰æ¸¸æ ‡ï¼ŒæŸ¥è¯¢å‡ºcj_inverter_dataä¸­çš„100æ¡è®°å½•ï¼ŒæŒ‰é‡‡é›†æ—¶é—´ï¼Œç”µç«™ å‡åºæ’åº
 	DECLARE cur CURSOR FOR SELECT d.CRID, d.COLLECT_NODE_ID, d.COLLECT_TIME, d.TODAY_CAPACITY, d.TOTAL_CAPACITY FROM cj_inverter_data d WHERE d.AGGREGATED = 0 ORDER BY d.COLLECT_NODE_ID, d.COLLECT_TIME ASC LIMIT 100;
-	-- ÉùÃ÷µ±ÓÎ±ê±éÀúÍêÈ«²¿¼ÇÂ¼ºó½«±êÖ¾±äÁ¿ÖÃ³ÉÄ³¸öÖµ
+	-- å£°æ˜å½“æ¸¸æ ‡éå†å®Œå…¨éƒ¨è®°å½•åå°†æ ‡å¿—å˜é‡ç½®æˆæŸä¸ªå€¼
 	DECLARE CONTINUE HANDLER FOR NOT FOUND 
 		SET cur_flag=1;
-	-- ³ö´íÊ± ½« t_error ±ê¼ÇÎª1
-  	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET t_error=1;
--- ------------±äÁ¿ÉùÃ÷ end--------------------------------------------------------------------------------------------------------------
+	-- å‡ºé”™æ—¶ å°† t_error æ ‡è®°ä¸º1
+  DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET t_error=1;
+-- ------------å˜é‡å£°æ˜ end--------------------------------------------------------------------------------------------------------------
 
-	-- ´ò¿ªÓÎ±ê
+	-- æ‰“å¼€æ¸¸æ ‡
 	OPEN cur;
-	-- Ñ­»·
+	-- å¾ªç¯
 	REPEAT
-		FETCH cur INTO var_crid, var_collect_node_id, var_collect_time, var_today, var_total; -- È¡³öÒ»Ìõ¼ÇÂ¼
+		FETCH cur INTO var_crid, var_collect_node_id, var_collect_time, var_today, var_total; -- å–å‡ºä¸€æ¡è®°å½•
 		IF cur_flag = 0 THEN
 			-- SELECT var_crid, var_collect_node_id, var_collect_time, var_today, var_total;
 			SET var_year = DATE_FORMAT(var_collect_time,'%Y');
 			SET var_month = DATE_FORMAT(var_collect_time,'%m');
 			SET var_day = DATE_FORMAT(var_collect_time,'%d');
 			-- SELECT var_year, var_month, var_day;
-			-- ¸ù¾İcollect_node_id²éÑ¯µçÕ¾id
+			-- æ ¹æ®collect_node_idæŸ¥è¯¢ç”µç«™id
 			SET var_psid = null;
 			SELECT station_id INTO var_psid FROM collect_node WHERE collect_node_id = var_collect_node_id;
 			-- SELECT var_psid;
-			SET t_error = 0; -- ½«´íÎó±ê¼ÇÉèÖÃÎª0
-			START TRANSACTION; -- ¿ªÊ¼ÊÂÎï
-	-- ------------´¦Àí×Ü·¢µçÁ¿ start---------------------------------------------------------------------------------------------------------
+			SET t_error = 0; -- å°†é”™è¯¯æ ‡è®°è®¾ç½®ä¸º0
+			START TRANSACTION; -- å¼€å§‹äº‹ç‰©
+	-- ------------å¤„ç†æ€»å‘ç”µé‡ start---------------------------------------------------------------------------------------------------------
 			/*
-			ÏÈ²éÑ¯cj_powerstation_energy£¨Ò»¸ö²É¼¯µãÖ»ÓĞÒ»Ìõ¼ÇÂ¼£©±íÖĞ£¬´æ²»´æÔÚ¸Ã²É¼¯µãµÄ¼ÇÂ¼£¬Èç¹û´æÔÚ£¬Ôò¸üĞÂ£¬
-			Èç¹û²»´æÔÚ£¬Ôò²åÈë¡£²¢ÇÒ¼ÆËã³öÕâÒ»ÌõÊı¾İÏà¶ÔÓÚÉÏÒ»´ÎµÄÔöÁ¿£¨¿ÉÒÔÀí½âÎªÕâÒ»ÌõÊı¾İµÄ·¢µçÁ¿£©£¬Õâ¸öÔöÁ¿ÔÚ
-			ºóĞøÍ³¼ÆÈÕ£¬ÔÂ£¬ÄêÊ±°´ÕÕ´æÔÚ¸üĞÂ²»´æÔÚ²åÈëµÄ·½Ê½Í³¼ÆÄêÔÂÈÕ¡£
+			å…ˆæŸ¥è¯¢cj_powerstation_energyï¼ˆä¸€ä¸ªé‡‡é›†ç‚¹åªæœ‰ä¸€æ¡è®°å½•ï¼‰è¡¨ä¸­ï¼Œå­˜ä¸å­˜åœ¨è¯¥é‡‡é›†ç‚¹çš„è®°å½•ï¼Œå¦‚æœå­˜åœ¨ï¼Œåˆ™æ›´æ–°ï¼Œ
+			å¦‚æœä¸å­˜åœ¨ï¼Œåˆ™æ’å…¥ã€‚å¹¶ä¸”è®¡ç®—å‡ºè¿™ä¸€æ¡æ•°æ®ç›¸å¯¹äºä¸Šä¸€æ¬¡çš„å¢é‡ï¼ˆå¯ä»¥ç†è§£ä¸ºè¿™ä¸€æ¡æ•°æ®çš„å‘ç”µé‡ï¼‰ï¼Œè¿™ä¸ªå¢é‡åœ¨
+			åç»­ç»Ÿè®¡æ—¥ï¼Œæœˆï¼Œå¹´æ—¶æŒ‰ç…§å­˜åœ¨æ›´æ–°ä¸å­˜åœ¨æ’å…¥çš„æ–¹å¼ç»Ÿè®¡å¹´æœˆæ—¥ã€‚
 			*/
-			-- ³õÊ¼»¯±äÁ¿
+			-- åˆå§‹åŒ–å˜é‡
 			SET var_exist = 0;
 			SET var_last = 0;
 			SELECT count(*) INTO var_exist FROM cj_powerstation_energy e WHERE e.collect_node_id = var_collect_node_id;
-			IF var_exist = 0 THEN -- ÅĞ¶Ï×Ü¼ÇÂ¼²»´æÔÚ£¬²åÈë
+			IF var_exist = 0 THEN -- åˆ¤æ–­æ€»è®°å½•ä¸å­˜åœ¨ï¼Œæ’å…¥
 				SET var_energy = var_total;
 				INSERT INTO cj_powerstation_energy(collect_node_id, total_energy, create_time, last_modify_time) VALUES (var_collect_node_id, var_total, NOW(), NOW());
-			ELSE-- ¸üĞÂ
+			ELSE-- æ›´æ–°
 				SELECT e.total_energy INTO var_last FROM cj_powerstation_energy e WHERE e.collect_node_id = var_collect_node_id;
-				SET var_energy = var_total - var_last; -- ±¾´Î×Ü·¢µçÁ¿ÓëÉÏÒ»´Î¼ÇÂ¼µÄ×Ü·¢µçÁ¿²îÖµ, Ò²¾ÍÊÇÏà¶ÔÓÚÉÏÒ»´ÎµÄÔöÁ¿
+				SET var_energy = var_total - var_last; -- æœ¬æ¬¡æ€»å‘ç”µé‡ä¸ä¸Šä¸€æ¬¡è®°å½•çš„æ€»å‘ç”µé‡å·®å€¼, ä¹Ÿå°±æ˜¯ç›¸å¯¹äºä¸Šä¸€æ¬¡çš„å¢é‡
 				IF var_energy > 0 THEN
 					-- SELECT var_total;
 					update cj_powerstation_energy e SET e.total_energy = var_total, e.last_modify_time = NOW() WHERE e.collect_node_id = var_collect_node_id;
-				ELSE -- ·¢µçÁ¿Ğ¡ÓÚ0 ½«´íÎó±ê¼ÇÖÃÎª1
+				ELSE -- å‘ç”µé‡å°äº0 å°†é”™è¯¯æ ‡è®°ç½®ä¸º1
 					SET t_error = 1;
 				END IF;
 			END IF;
--- ------------´¦Àí×Ü·¢µçÁ¿ end-----------------------------------------------------------------------------------------------------------
+-- ------------å¤„ç†æ€»å‘ç”µé‡ end-----------------------------------------------------------------------------------------------------------
 
-			-- SELECT var_energy;-- µÃµ½µÄ·¢µçÁ¿µÄÔöÁ¿
+			-- SELECT var_energy;-- å¾—åˆ°çš„å‘ç”µé‡çš„å¢é‡
 			-- SELECT t_error;
-			-- Èç¹û´íÎó±ê¼ÇÎª0ÔòÖ´ĞĞºóĞø²Ù×÷
+			-- å¦‚æœé”™è¯¯æ ‡è®°ä¸º0åˆ™æ‰§è¡Œåç»­æ“ä½œ
 			IF t_error = 0 THEN
-	-- ------------´¦ÀíÈÕ·¢µçÁ¿ start---------------------------------------------------------------------------------------------------------
-				-- ³õÊ¼»¯±äÁ¿
+
+	-- ------------å¤„ç†æ—¥å‘ç”µé‡ start---------------------------------------------------------------------------------------------------------
+				-- åˆå§‹åŒ–å˜é‡
 				SET var_exist = 0;
 				SET var_last = 0;
 				SELECT count(*) INTO var_exist FROM cj_powerstation_day e WHERE e.collect_node_id = var_collect_node_id AND flg_date = CONCAT(var_year,'-',var_month,'-',var_day);
-				IF var_exist = 0 THEN -- ÅĞ¶ÏÈÕ¼ÇÂ¼²»´æÔÚ£¬²åÈë
+				IF var_exist = 0 THEN -- åˆ¤æ–­æ—¥è®°å½•ä¸å­˜åœ¨ï¼Œæ’å…¥
 					SET var_last = var_energy;
 					INSERT INTO cj_powerstation_day(id, powerstation_id, collect_node_id, flg_date, today_energy, total_energy, today_togrid_energy, total_togrid_energy, change_record_id, creat_time)
 						VALUES (UUID(), var_psid, var_collect_node_id, CONCAT(var_year,'-',var_month,'-',var_day), var_last, var_total, var_last, var_total, var_crid, NOW());
-				ELSE-- ¸üĞÂ
+				ELSE-- æ›´æ–°
 					SELECT e.today_energy INTO var_last FROM cj_powerstation_day e WHERE e.collect_node_id = var_collect_node_id AND flg_date = CONCAT(var_year,'-',var_month,'-',var_day) LIMIT 1;
 					SET var_last = var_last + var_energy;
 					UPDATE cj_powerstation_day d SET d.TODAY_ENERGY = var_last, d.TOTAL_ENERGY = var_total, d.TODAY_TOGRID_ENERGY = var_last, d.TOTAL_TOGRID_ENERGY = var_total WHERE d.COLLECT_NODE_ID = var_collect_node_id AND flg_date = CONCAT(var_year,'-',var_month,'-',var_day);
 				END IF;
-	-- ------------´¦ÀíÈÕ·¢µçÁ¿ end---------------------------------------------------------------------------------------------------------
+	-- ------------å¤„ç†æ—¥å‘ç”µé‡ end---------------------------------------------------------------------------------------------------------
 
-	-- ------------µçÕ¾ÊµÊ±Êı¾İstart--------------------------------------------------------------------------------------------------------
-				-- ³õÊ¼»¯±äÁ¿
+	-- ------------ç”µç«™å®æ—¶æ•°æ®start--------------------------------------------------------------------------------------------------------
+				-- åˆå§‹åŒ–å˜é‡
 				SET var_exist = 0;
-				-- ×¢Òâ£¬ÕâÀïÃ»ÓĞ³õÊ¼»¯×îºó·¢µçÁ¿£¬Ê¹ÓÃµÄÊÇ´¦ÀíÈÕ·¢µçÁ¿Ê±µÄÊı¾İ
+				-- æ³¨æ„ï¼Œè¿™é‡Œæ²¡æœ‰åˆå§‹åŒ–æœ€åå‘ç”µé‡ï¼Œä½¿ç”¨çš„æ˜¯å¤„ç†æ—¥å‘ç”µé‡æ—¶çš„æ•°æ®
 				SELECT count(*) INTO var_exist FROM cj_powerstation_realdata where POWERSTATION_ID = var_psid;
-				IF var_exist = 0 THEN -- ÅĞ¶ÏÊµÊ±¼ÇÂ¼²»´æÔÚ
+				IF var_exist = 0 THEN -- åˆ¤æ–­å®æ—¶è®°å½•ä¸å­˜åœ¨
 					INSERT INTO cj_powerstation_realdata(POWERSTATION_ID, IS_ONLINE, TODAY_ENERGY, TODAY_TOGRID, TOTAL_ENERGY, TOTAL_TOGRID, LAST_COLLECTION_TIME, CREAT_TIME)
 						VALUES (var_psid, 1, var_last, var_last, var_total, var_total, var_collect_time, now());
-				ELSE -- ´æÔÚ£¬¸üĞÂ
+				ELSE -- å­˜åœ¨ï¼Œæ›´æ–°
 					UPDATE cj_powerstation_realdata pr set pr.TODAY_ENERGY = var_last, pr.TODAY_TOGRID = var_last, pr.TOTAL_ENERGY = var_total, pr.TOTAL_TOGRID = var_total, pr.LAST_COLLECTION_TIME = var_collect_time WHERE pr.POWERSTATION_ID = var_psid;
 				END IF;
-	-- ------------µçÕ¾ÊµÊ±Êı¾İend----------------------------------------------------------------------------------------------------------
+	-- ------------ç”µç«™å®æ—¶æ•°æ®end----------------------------------------------------------------------------------------------------------
 
+	-- ------------å¤„ç†realdataå®æ—¶æ•°æ® start---------------------------------------------------------------------------------------------------------
+				INSERT cj_realdatas(ID, POWERSTATION_ID, DEVICE_SN, INVERTERID, COLLECT_TIME, CONN_LOST, COLLECT_ADDR, TYPE, STATUS, ETODAY, ETOTAL, ETOGRID, PAC, PPV, WORKTIME, WARNCODE, RAWDATA, CREAT_TIME)
+					VALUES(UUID(), var_psid, NULL, (), var_collect_time, 0, NULL, '1', NULL, var_last, var_total, var_energy, 1, 1, NULL, NULL, var_crid, NOW());
+	-- ------------å¤„ç†realdataå®æ—¶æ•°æ® end---------------------------------------------------------------------------------------------------------
 
-	-- ------------´¦ÀíÔÂ·¢µçÁ¿ start-------------------------------------------------------------------------------------------------------
-				-- ³õÊ¼»¯±äÁ¿
+	-- ------------å¤„ç†æœˆå‘ç”µé‡ start-------------------------------------------------------------------------------------------------------
+				-- åˆå§‹åŒ–å˜é‡
 				SET var_exist = 0;
 				SET var_last = 0;
 				SELECT count(*) INTO var_exist FROM cj_powerstation_month e WHERE e.collect_node_id = var_collect_node_id AND e.FLG_YEAR = var_year AND e.FLG_MONTH = var_month;
-				IF var_exist = 0 THEN -- µ±ÔÂÊı¾İÎª¿Õ£¬²åÈë
+				IF var_exist = 0 THEN -- å½“æœˆæ•°æ®ä¸ºç©ºï¼Œæ’å…¥
 					INSERT INTO cj_powerstation_month(id, powerstation_id, collect_node_id, flg_year, flg_month, month_energy, total_energy, month_togid_energy, total_togrid_energy, change_record_id, creat_time) 
 						VALUES (UUID(), var_psid, var_collect_node_id, var_year, var_month, var_energy, var_total, var_energy, var_total, var_crid, NOW());
-				ELSE -- ¸üĞÂ
+				ELSE -- æ›´æ–°
 					SELECT e.month_energy INTO var_last FROM cj_powerstation_month e WHERE e.collect_node_id = var_collect_node_id AND e.FLG_YEAR = var_year AND e.FLG_MONTH = var_month LIMIT 1;
 					SET var_last = var_last + var_energy;
 					UPDATE cj_powerstation_month d SET d.MONTH_ENERGY = var_last, d.TOTAL_ENERGY = var_total, d.MONTH_TOGID_ENERGY = var_last, d.TOTAL_TOGRID_ENERGY = var_total WHERE d.collect_node_id = var_collect_node_id AND d.FLG_YEAR = var_year AND d.FLG_MONTH = var_month;
 				END IF;
-	-- ------------´¦ÀíÔÂ·¢µçÁ¿ end---------------------------------------------------------------------------------------------------------
+	-- ------------å¤„ç†æœˆå‘ç”µé‡ end---------------------------------------------------------------------------------------------------------
 
-	-- ------------´¦ÀíÄê·¢µçÁ¿ start-------------------------------------------------------------------------------------------------------
-				-- ³õÊ¼»¯±äÁ¿
+	-- ------------å¤„ç†å¹´å‘ç”µé‡ start-------------------------------------------------------------------------------------------------------
+				-- åˆå§‹åŒ–å˜é‡
 				SET var_exist = 0;
 				SET var_last = 0;
 				SELECT count(*) INTO var_exist FROM cj_powerstation_year e WHERE e.collect_node_id = var_collect_node_id AND e.FLG_YEAR = var_year;
-				IF var_exist = 0 THEN -- µ±ÄêÊı¾İÎª¿Õ£¬²åÈë
+				IF var_exist = 0 THEN -- å½“å¹´æ•°æ®ä¸ºç©ºï¼Œæ’å…¥
 					INSERT INTO cj_powerstation_year(id, powerstation_id, collect_node_id, flg_year, year_energy, total_energy, year_togid_energy, total_togrid_energy, change_record_id, creat_time) 
 						VALUES (UUID(), var_psid, var_collect_node_id, var_year, var_energy, var_total, var_energy, var_total, var_crid, NOW());
-				ELSE -- ¸üĞÂ
+				ELSE -- æ›´æ–°
 					SELECT e.YEAR_ENERGY INTO var_last FROM cj_powerstation_year e WHERE e.collect_node_id = var_collect_node_id AND e.FLG_YEAR = var_year LIMIT 1;
 					SET var_last = var_last + var_energy;
 					UPDATE cj_powerstation_year d SET d.YEAR_ENERGY = var_last, d.TOTAL_ENERGY = var_total, d.YEAR_TOGID_ENERGY = var_last, d.TOTAL_TOGRID_ENERGY = var_total WHERE d.collect_node_id = var_collect_node_id AND d.FLG_YEAR = var_year;
 				END IF;
-	-- ------------´¦ÀíÄê·¢µçÁ¿ end---------------------------------------------------------------------------------------------------------
+	-- ------------å¤„ç†å¹´å‘ç”µé‡ end---------------------------------------------------------------------------------------------------------
 
-	-- ------------¸üĞÂÄæ±äÆ÷ÊµÊ±Êı¾İ±íµÄÍ³¼Æ×´Ì¬ start---------------------------------------------------------------------------------------
+	-- ------------æ›´æ–°é€†å˜å™¨å®æ—¶æ•°æ®è¡¨çš„ç»Ÿè®¡çŠ¶æ€ start---------------------------------------------------------------------------------------
 				UPDATE cj_inverter_data d SET d.AGGREGATED = 1 WHERE d.CRID = var_crid;
-	-- ------------¸üĞÂÄæ±äÆ÷ÊµÊ±Êı¾İ±íµÄÍ³¼Æ×´Ì¬ end-----------------------------------------------------------------------------------------
+	-- ------------æ›´æ–°é€†å˜å™¨å®æ—¶æ•°æ®è¡¨çš„ç»Ÿè®¡çŠ¶æ€ end-----------------------------------------------------------------------------------------
 			END IF;
-	-- ------------Òì³£´¦Àí start-----------------------------------------------------------------------------------------------------------
+	-- ------------å¼‚å¸¸å¤„ç† start-----------------------------------------------------------------------------------------------------------
 			-- SELECT t_error;
-			IF t_error = 1 THEN -- Èç¹û³ö´í
-					ROLLBACK; -- »Ø¹ö
-					-- ĞŞ¸ÄÍ³¼Æ×´Ì¬Îª³ö´í£¬±ÜÃâÔÙ´ÎÍ³¼Æ
+			IF t_error = 1 THEN -- å¦‚æœå‡ºé”™
+					ROLLBACK; -- å›æ»š
+					-- ä¿®æ”¹ç»Ÿè®¡çŠ¶æ€ä¸ºå‡ºé”™ï¼Œé¿å…å†æ¬¡ç»Ÿè®¡
 					UPDATE cj_inverter_data d set d.AGGREGATED = -1 where d.CRID = var_crid;
 					COMMIT;
 			ELSE
-					COMMIT; -- Ìá½»
+					COMMIT; -- æäº¤
 			END IF;
-	-- ------------Òì³£´¦Àí end-------------------------------------------------------------------------------------------------------------
+	-- ------------å¼‚å¸¸å¤„ç† end-------------------------------------------------------------------------------------------------------------
 	END IF;
-	UNTIL cur_flag  END REPEAT;-- Ñ­»·½áÊø
+	UNTIL cur_flag  END REPEAT;-- å¾ªç¯ç»“æŸ
 	CLOSE cur;
 END $$
 DELIMITER ;

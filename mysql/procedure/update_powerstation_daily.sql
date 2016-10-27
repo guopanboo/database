@@ -1,22 +1,22 @@
 create PROCEDURE update_powerstation_daily() 
 BEGIN 
-	-- µçÕ¾id
+	-- ç”µç«™id
 	DECLARE var_powerstation_id VARCHAR(36);
-	-- Òª¸üĞÂµÄÁĞÃû
+	-- è¦æ›´æ–°çš„åˆ—å
 	DECLARE var_hour INT DEFAULT 0;
-	-- ¶¨ÒåÒ»¸ö±äÁ¿£¬×÷Îª±éÀúÊ±ÊÇ·ñ±éÀúÍê³ÉµÄ±êÊ¶
+	-- å®šä¹‰ä¸€ä¸ªå˜é‡ï¼Œä½œä¸ºéå†æ—¶æ˜¯å¦éå†å®Œæˆçš„æ ‡è¯†
 	DECLARE cur_flag INTEGER DEFAULT 0;
-	-- ¶¨ÒåÓÎ±ê£¬²éÑ¯ËùÓĞµçÕ¾µÄid
+	-- å®šä¹‰æ¸¸æ ‡ï¼ŒæŸ¥è¯¢æ‰€æœ‰ç”µç«™çš„id
 	DECLARE cur CURSOR FOR select ID from ps_powerstations where DEL_FLAG = 0;
-	-- ÉùÃ÷µ±ÓÎ±ê±éÀúÍêÈ«²¿¼ÇÂ¼ºó½«±êÖ¾±äÁ¿ÖÃ³ÉÄ³¸öÖµ
+	-- å£°æ˜å½“æ¸¸æ ‡éå†å®Œå…¨éƒ¨è®°å½•åå°†æ ‡å¿—å˜é‡ç½®æˆæŸä¸ªå€¼
 	DECLARE CONTINUE HANDLER FOR NOT FOUND 
 		SET cur_flag=1;
-	-- M ¼ÓÉÏ ¹ıÈ¥Ò»¸öĞ¡Ê±µÄĞ¡Ê± ×é³ÉÒª¸üĞÂµÄÁĞÃû
+	-- M åŠ ä¸Š è¿‡å»ä¸€ä¸ªå°æ—¶çš„å°æ—¶ ç»„æˆè¦æ›´æ–°çš„åˆ—å
 	select date_format(date_add(now(), INTERVAL - 1 hour), '%H') into var_hour;
 	OPEN cur;
-	-- Ñ­»·
+	-- å¾ªç¯
 	REPEAT 
-		FETCH cur INTO var_powerstation_id; -- È¡³öÒ»ÌõµçÕ¾µÄid\
+		FETCH cur INTO var_powerstation_id; -- å–å‡ºä¸€æ¡ç”µç«™çš„id\
 			CASE var_hour 
 				WHEN 1 THEN 
 					insert into cj_powerstation_daily(powerstation_id, date, h1, create_time) 
@@ -356,6 +356,6 @@ BEGIN
 									UPDATE h24 = VALUES(h24), last_modify_time = values(create_time);
 			ELSE BEGIN END;
 		END CASE;
-	UNTIL cur_flag END REPEAT;-- Ñ­»·½áÊø
+	UNTIL cur_flag END REPEAT;-- å¾ªç¯ç»“æŸ
 	CLOSE cur;
 END

@@ -1,0 +1,8 @@
+eclipse.preferences.version=1
+encoding//procedure/queryMasterById.sql=UTF-8
+encoding//procedure/statistics_ps_data.sql=UTF-8
+encoding//procedure/update_device_status.sql=UTF-8
+encoding//procedure/update_powerstation_daily.sql=UTF-8
+encoding//view/view_powerstation_day_energy.sql=UTF-8
+encoding//view/view_powerstation_month_energy.sql=UTF-8
+encoding//view/view_weather_latest.sql=UTF-8

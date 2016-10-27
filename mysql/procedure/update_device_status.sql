@@ -1,40 +1,40 @@
 create PROCEDURE update_device_status()
 BEGIN 
-	-- Éè±¸id
+	-- è®¾å¤‡id
 	declare var_device_id VARCHAR(36);
-	-- Éè±¸ÀàĞÍ
+	-- è®¾å¤‡ç±»å‹
 	declare var_type_code INT;
-	-- Éè±¸ĞòÁĞºÅ
+	-- è®¾å¤‡åºåˆ—å·
 	DECLARE var_sn VARCHAR(36);
-	-- ¶¨ÒåÓÎ±ê±éÀúÊ±£¬×÷ÎªÅĞ¶ÏÊÇ·ñ±éÀúÍêÈ«²¿¼ÇÂ¼µÄ±ê¼Ç
+	-- å®šä¹‰æ¸¸æ ‡éå†æ—¶ï¼Œä½œä¸ºåˆ¤æ–­æ˜¯å¦éå†å®Œå…¨éƒ¨è®°å½•çš„æ ‡è®°
   declare cur_flag integer DEFAULT 0;
-	-- ¶¨ÒåÓÎ±ê£¬²éÑ¯³öÄæ±äÆ÷µÄËùÓĞid, sn, type_code
-	DECLARE cur CURSOR FOR select id, sn, type_code from ps_devices where del_flag = 0 and sn is not null and sn != 'ÎŞ';
-	-- ¶¨ÒåÓÎ±ê£¬²éÑ¯³öËùÓĞÂåÑôÔ¸¾°µÄ²É¼¯Æ÷
+	-- å®šä¹‰æ¸¸æ ‡ï¼ŒæŸ¥è¯¢å‡ºé€†å˜å™¨çš„æ‰€æœ‰id, sn, type_code
+	DECLARE cur CURSOR FOR select id, sn, type_code from ps_devices where del_flag = 0 and sn is not null and sn != 'æ— ';
+	-- å®šä¹‰æ¸¸æ ‡ï¼ŒæŸ¥è¯¢å‡ºæ‰€æœ‰æ´›é˜³æ„¿æ™¯çš„é‡‡é›†å™¨
 	DECLARE cur_lyyj CURSOR FOR select id from ps_devices where del_flag = 0 and type_code = 6 and (vendor_id = '516aaf86-780c-4bf6-863d-bb6f437f255d' or vendor_id = '042eca7f-9dd5-41c9-8d3f-845cedb94ff1');
-	-- ¶¨ÒåÓÎ±ê£¬²éÑ¯³öËùÓĞ¼¯ÖĞÆ÷
+	-- å®šä¹‰æ¸¸æ ‡ï¼ŒæŸ¥è¯¢å‡ºæ‰€æœ‰é›†ä¸­å™¨
 	DECLARE cur_jzq CURSOR FOR select id from ps_devices where del_flag = 0 and type_code = 8;
-	-- ÉùÃ÷µ±ÓÎ±ê±éÀúÍêÈ«²¿¼ÇÂ¼ºó½«±êÖ¾±äÁ¿ÖÃ³ÉÄ³¸öÖµ
+	-- å£°æ˜å½“æ¸¸æ ‡éå†å®Œå…¨éƒ¨è®°å½•åå°†æ ‡å¿—å˜é‡ç½®æˆæŸä¸ªå€¼
 	DECLARE CONTINUE HANDLER FOR NOT FOUND 
 		SET cur_flag=1;
 	OPEN cur;
-	-- Ñ­»·
+	-- å¾ªç¯
 	REPEAT
-		FETCH cur INTO var_device_id, var_sn, var_type_code; -- È¡³öÒ»Ìõ¼ÇÂ¼
+		FETCH cur INTO var_device_id, var_sn, var_type_code; -- å–å‡ºä¸€æ¡è®°å½•
 		CASE var_type_code 
-			WHEN 3 THEN-- Èç¹ûtype=3 ÊÇÄæ±äÆ÷
+			WHEN 3 THEN-- å¦‚æœtype=3 æ˜¯é€†å˜å™¨
 				update collect_node n set n.online = 
 					(select count(r.flag) as online from (select 1 as flag from cj_realdatas where inverterid = var_sn and creat_time > DATE_SUB(SYSDATE(),INTERVAL 30 MINUTE) limit 1) r)
 				where n.DEVICE_ID = var_device_id;
-			WHEN 6 THEN -- Èç¹ûtype=6Îª²É¼¯Æ÷
+			WHEN 6 THEN -- å¦‚æœtype=6ä¸ºé‡‡é›†å™¨
 				update collect_node n set n.online = 
 					(select count(r.flag) as online from (select 1 as flag from collector_online_log where device_id = var_device_id and ONLINE != 0 and ctime > DATE_SUB(SYSDATE(),INTERVAL 30 MINUTE) limit 1) r)
 				where n.DEVICE_ID = var_device_id;
 			ELSE BEGIN END;
 		END CASE;
-	UNTIL cur_flag  END REPEAT;-- Ñ­»·½áÊø
+	UNTIL cur_flag  END REPEAT;-- å¾ªç¯ç»“æŸ
 	CLOSE cur;
-	-- ´´½¨ÁÙÊ±±í
+	-- åˆ›å»ºä¸´æ—¶è¡¨
 	CREATE TABLE IF NOT EXISTS temp_collect_node_online (
 		id VARCHAR(36),
 		online INT
@@ -43,7 +43,7 @@ BEGIN
 	open cur_lyyj;
 	REPEAT
 		FETCH cur_lyyj INTO var_device_id;
-		-- ¸üĞÂ²É¼¯Æ÷×´Ì¬£¬ÅĞ¶Ï²É¼¯Æ÷ÏÂÃæµÄËùÓĞÄæ±äÆ÷µÄ×´Ì¬À´ÅĞ¶Ï²É¼¯Æ÷µÄ×´Ì¬
+		-- æ›´æ–°é‡‡é›†å™¨çŠ¶æ€ï¼Œåˆ¤æ–­é‡‡é›†å™¨ä¸‹é¢çš„æ‰€æœ‰é€†å˜å™¨çš„çŠ¶æ€æ¥åˆ¤æ–­é‡‡é›†å™¨çš„çŠ¶æ€
 		INSERT into temp_collect_node_online(id, online) values(var_device_id, (select case sum(s.online) WHEN 0 then 0 ELSE 1 END  as online from collect_node s where s.device_id in (select device_partner_id from ps_device_monitors where device_child_id  = var_device_id)));
 		update collect_node n set n.`ONLINE` = 
 			(select online from temp_collect_node_online where id = var_device_id limit 1)
@@ -54,13 +54,13 @@ BEGIN
 	open cur_jzq;
 	REPEAT
 		FETCH cur_jzq INTO var_device_id;
-		-- ¸üĞÂ¼¯ÖĞÆ÷×´Ì¬£¬ÅĞ¶Ï¼¯ÖĞÆ÷ÏÂÃæµÄËùÓĞ²É¼¯Æ÷µÄ×´Ì¬À´ÅĞ¶Ï¼¯ÖĞÆ÷µÄ×´Ì¬
+		-- æ›´æ–°é›†ä¸­å™¨çŠ¶æ€ï¼Œåˆ¤æ–­é›†ä¸­å™¨ä¸‹é¢çš„æ‰€æœ‰é‡‡é›†å™¨çš„çŠ¶æ€æ¥åˆ¤æ–­é›†ä¸­å™¨çš„çŠ¶æ€
 		INSERT into temp_collect_node_online(id, online) values(var_device_id, (select case sum(s.online) WHEN 0 then 0 ELSE 1 END  as online from collect_node s where s.device_id in (select device_partner_id from ps_device_monitors where device_child_id  = var_device_id)));
 		update collect_node n set n.`ONLINE` = 
 			(select online from temp_collect_node_online where id = var_device_id limit 1)
 		where n.DEVICE_ID = var_device_id;
 	UNTIL cur_flag END REPEAT;
 	CLOSE cur_jzq;
-	-- É¾³ıÁÙÊ±±í
+	-- åˆ é™¤ä¸´æ—¶è¡¨
 	DROP TABLE temp_collect_node_online;
 END
