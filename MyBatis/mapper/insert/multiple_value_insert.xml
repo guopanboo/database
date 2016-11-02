@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 多组值插入，主键重复（记录已存在时）更新字段，可自定义更新列 -->
+<insert id="save" parameterType="Map">
+	INSERT INTO cj_powerstation_year_use_hour 
+		(powerstation_id, year, ${field}, create_date) 
+	VALUES 
+		<foreach collection="list" item="item" index="index" separator="," >  
+	        (#{item.powerstation_id},#{item.year},#{item.value},SYSDATE())  
+	    </foreach>  
+	ON DUPLICATE KEY 
+		UPDATE ${field}=VALUES(${field}), last_modify_date = SYSDATE();
+</insert>
